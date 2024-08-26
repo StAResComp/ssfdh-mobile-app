@@ -6,6 +6,9 @@ import { ThemedView } from '@/components/ThemedView';
 import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MapLibreGL from '@maplibre/maplibre-react-native';
+
+MapLibreGL.setAccessToken(null);
 
 export default function HomeScreen() {
 	const [fishLocation, setfishLocation] = useState(false); 
@@ -62,6 +65,16 @@ export default function HomeScreen() {
 		showMode('time');
 	};
 
+	function mapOnPress(event) {
+		const { geometry, properties } = event;
+		console.log(geometry)
+		/*this.setState({
+			latitude: geometry.coordinates[1],
+			longitude: geometry.coordinates[0],
+			screenPointX: properties.screenPointX,
+			screenPointY: properties.screenPointY,
+		});*/
+	}
 
 	const handleRetainedChange = (text) => {
 		setRetained(text)
@@ -128,7 +141,15 @@ export default function HomeScreen() {
 				)}
 		{( showMap) && (
 		<ThemedView style={{ flexDirection: 'column', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
-			<ThemedView style={{ flexDirection: 'column', marginTop: 80 }}>
+			<ThemedView style={{ flexDirection: 'column'}}>
+							<MapLibreGL.MapView
+								style={styles.map}
+								logoEnabled={false}
+								onPress={mapOnPress}
+							 	styleURL="https://demotiles.maplibre.org/style.json"
+							>
+								<MapLibreGL.Camera centerCoordinate={[-128.32801214367845, -24.361464638078317]} zoomLevel={7} />
+							</MapLibreGL.MapView>
 				<Button
 					title="Pretend Map"
 					color="#008000"
@@ -341,5 +362,9 @@ const styles = StyleSheet.create({
 		bottom: 0,
 		left: 0,
 		position: 'absolute',
+	},
+	map: {
+		height: 290,
+		width: 400,
 	},
 });
