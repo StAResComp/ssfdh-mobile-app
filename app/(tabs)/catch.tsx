@@ -99,7 +99,7 @@ export default function HomeScreen() {
 
 	return (
 		<ParallaxScrollView
-			headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
+		headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
 		headerImage={
 		<Image
 		source={require('@/assets/images/pitcairn_001_transparent.png')}
@@ -222,7 +222,7 @@ export default function HomeScreen() {
 						<Picker.Item label="Fish 1" value="fish 1" />
 						<Picker.Item label="Fish 2" value="fish 2" />
 				</Picker>
-				<ThemedView style={{ marginTop: 40, marginBottom: 20}}>
+				<ThemedView style={{ marginTop: 240, marginBottom: 20}}>
 					<Button
 						title="Reselect Gear"
 						color="#ff0000"
@@ -246,15 +246,15 @@ export default function HomeScreen() {
 							<Picker.Item label="Metric 1" value="Metric 1" />
 							<Picker.Item label="Metric 2" value="Metric 2" />
 						</Picker>
-						<ThemedView style={{ marginTop: 60 }}>
+						<ThemedView style={{ marginTop: 30 }}>
 							<ThemedText type="defaultSemiBold"> Retained: </ThemedText>
 							<TextInput keyboardType='numeric' value={retained} style={{ color: textColor[colorScheme] }} placeholder="Retained" onChangeText={handleRetainedChange} />
 						</ThemedView> 
-						<ThemedView style={{ marginTop: 60 }}>
+						<ThemedView style={{ marginTop: 30 }}>
 							<ThemedText type="defaultSemiBold"> Returned: </ThemedText>
 							<TextInput keyboardType='numeric' value={returned} style={{ color: textColor[colorScheme] }} placeholder="Returned" onChangeText={handleReturnedChange} />
 						</ThemedView> 
-						<ThemedView style={{ marginTop: 60, marginBottom: 40 }}>
+						<ThemedView style={{ marginTop: 40, marginBottom: 10 }}>
 						<Button
 							title="Reselect Species"
 							color="#ff0000"
@@ -290,7 +290,7 @@ export default function HomeScreen() {
 							color="#008000"
 							onPress={() => handleDeleteClick("all")}
 						/>
-						<ThemedView style={{ marginLeft: 20 }}>
+						<ThemedView style={{ marginLeft: 40 }}>
 							<Button
 								title="Add Another Species"
 								color="#008000"
@@ -298,7 +298,7 @@ export default function HomeScreen() {
 							/>
 						</ThemedView>
 					</ThemedView>
-						<ThemedView style={{ marginTop: 20 }}>
+						<ThemedView style={{ marginTop: 60 }}>
 							<Button
 								title="Cancel"
 								color="#ff0000"
