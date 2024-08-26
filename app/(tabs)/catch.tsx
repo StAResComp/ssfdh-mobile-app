@@ -248,11 +248,11 @@ export default function HomeScreen() {
 						</Picker>
 						<ThemedView style={{ marginTop: 30 }}>
 							<ThemedText type="defaultSemiBold"> Retained: </ThemedText>
-							<TextInput keyboardType='numeric' value={retained} style={{ color: textColor[colorScheme] }} placeholder="Retained" onChangeText={handleRetainedChange} />
+							<TextInput keyboardType='numeric' value={retained} style={{ color: textColor[colorScheme] }} placeholder="Retained" placeholderTextColor={textColor[colorScheme]} onChangeText={handleRetainedChange} />
 						</ThemedView> 
 						<ThemedView style={{ marginTop: 30 }}>
 							<ThemedText type="defaultSemiBold"> Returned: </ThemedText>
-							<TextInput keyboardType='numeric' value={returned} style={{ color: textColor[colorScheme] }} placeholder="Returned" onChangeText={handleReturnedChange} />
+							<TextInput keyboardType='numeric' value={returned} style={{ color: textColor[colorScheme] }} placeholder="Returned" placeholderTextColor={textColor[colorScheme]} onChangeText={handleReturnedChange} />
 						</ThemedView> 
 						<ThemedView style={{ marginTop: 40, marginBottom: 10 }}>
 						<Button

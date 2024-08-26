@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Button, Pressable, TextInput, useColorScheme } from 'react-native';
+import { Image, StyleSheet, Button, TextInput, useColorScheme } from 'react-native';
 import { useState} from 'react';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
@@ -217,7 +217,7 @@ export default function HomeScreen() {
 					<ThemedView>
 						<ThemedView>
 							<ThemedText type="defaultSemiBold"> Number: </ThemedText>
-							<TextInput keyboardType='numeric' value={numberSeen} style={{ color: textColor[colorScheme] }} placeholder="Retained" onChangeText={handleNumber} />
+							<TextInput keyboardType='numeric' value={numberSeen} style={{ color: textColor[colorScheme] }} placeholder="Retained" placeholderTextColor={textColor[colorScheme]} onChangeText={handleNumber} />
 						</ThemedView>
 						<ThemedView style={{ marginTop: 40 }}>
 							<ThemedText type="defaultSemiBold"> Comment: </ThemedText>
@@ -227,6 +227,7 @@ export default function HomeScreen() {
 								value={comment}
 								style={{ height: 50, textAlignVertical: 'top', color: textColor[colorScheme] }}
 								placeholder="Comment"
+								placeholderTextColor={textColor[colorScheme]}
 								onChangeText={handleComment} />
 						</ThemedView>
 						<ThemedView style={{ marginTop: 60, marginBottom: 20 }}>
