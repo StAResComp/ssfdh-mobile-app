@@ -23,9 +23,28 @@ export default function RootLayout() {
             CREATE TABLE IF NOT EXISTS locations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 latitude REAL NOT NULL,
-                longitude REAL NOT NULL
+                longitude REAL NOT NULL,
+				speed REAL NOT NULL,
+				heading REAL NOT NULL,
+				altitude REAL NOT NULL,
+				timestamp INTEGER NOT NULL
             );
         `);
+			await db.execAsync(`
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS catch (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+				date TEXT NOT NULL,
+				gearType TEXT NOT NULL,
+				species TEXT NOT NULL,
+				metric TEXT NOT NULL,
+				retained TEXT NOT NULL,
+				returned TEXT NOT NULL
+            );
+        `);
+	
 			console.log('Database initialised')
 		} catch (error) {
 			console.log('Error while initializing database : ', error);

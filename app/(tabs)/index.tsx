@@ -50,6 +50,15 @@ export default function HomeScreen() {
 			console.log('Error while getting locations : ', error);
 		}
 	}
+
+	const getCatch = async () => {
+		try {
+			const allRows = await db.getAllAsync('SELECT * FROM locations');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while getting catch : ', error);
+		}
+	}
 	const deleteLocations = async () => {
 		try {
 			const allRows = await db.getAllAsync('DELETE FROM locations');
@@ -59,9 +68,10 @@ export default function HomeScreen() {
 		}
 	}
 	const addLocation = async (locations) => {
+		let currtime = new Date().toISOString();
 		try {
-			const statement = await db.prepareAsync('INSERT INTO locations (longitude, latitude) VALUES (?,?)');
-			await statement.executeAsync([locations[0].coords.longitude, locations[0].coords.latitude]);
+			const statement = await db.prepareAsync('INSERT INTO locations ( latitude, longitude, speed, heading, altitude, timestamp) VALUES (?,?,?,?,?,?)');
+			await statement.executeAsync([locations[0].coords.latitude, locations[0].coords.longitude, locations[0].coords.speed, locations[0].coords.heading, locations[0].coords.altitude, currtime]);
 		} catch (error) {
 			console.log('Error while adding location : ', error);
 		}
@@ -124,26 +134,33 @@ export default function HomeScreen() {
 			{location && (
 				<ThemedText type="defaultSemiBold"> Latitude: {location.coords.latitude} Longitude:{location.coords.longitude}  </ThemedText>
 			)}
-			{/*<ThemedView style={{ flexDirection: 'row' }}>
+			<ThemedView style={{ flexDirection: 'row' }}>
 				<ThemedView>
 					<Button
-						title="get DB Locations"
+						title="get DB Catch"
 						color="#ff0000"
-						onPress={() => getLocations()}
+						onPress={() => getCatch()}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
-						title="delete DB Locations"
+						title="delete Locations"
 						color="#ff0000"
 						onPress={() => deleteLocations()}
 					/>
 				</ThemedView>
-			</ThemedView>*/}
+			</ThemedView>
 			<ThemedView style={{ flexDirection: 'column', marginTop:60 }}>
 				<ThemedView>
 					<Button
 						title="Submit Data"
+						color="#008000"
+						onPress={() => getLocations()}
+					/>
+				</ThemedView>
+				<ThemedView style={{ marginTop: 60 }}>
+					<Button
+						title="Go to Website"
 						color="#008000"
 						onPress={() => getLocations()}
 					/>

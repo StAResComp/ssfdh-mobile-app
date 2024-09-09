@@ -7,6 +7,7 @@ import * as Location from 'expo-location';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapLibreGL from '@maplibre/maplibre-react-native';
+import { useSQLiteContext } from 'expo-sqlite';
 
 MapLibreGL.setAccessToken(null);
 
@@ -24,8 +25,39 @@ export default function HomeScreen() {
 	const [mode, setMode] = useState('date');
 	const [show, setShow] = useState(false);
 
+	const db = useSQLiteContext();
 	const textColor = { dark: '#ECEDEE', light: '#11181C' }
 	const colorScheme = useColorScheme() ?? 'light';
+
+	async function handleStoreData(fishLocation, catchTime, gearType, selectedSpecies, selectedMetric, retained, returned ) { 
+		try {
+			const statement = await db.prepareAsync('INSERT INTO Catch(latitude, longitude, date, gearType, species, metric, retained, returned ) VALUES (?,?,?,?,?,?,?,?)');
+			await statement.executeAsync([fishLocation.coords.latitude, fishLocation.coords.longitude, catchTime.toISOString(), gearType, selectedSpecies, selectedMetric, retained, returned]);
+		} catch (error) {
+			console.log('Error while adding catch : ', error);
+		}
+		setfishLocation(false)
+		setCatchTime(false)
+		setGearType(false)
+		setSelectedSpecies(false)
+		setSelectedMetric(false)
+		setRetained(false)
+		setReturned(false)
+		setShowMap(false)
+	}
+
+	async function handleStoreDataAdditional(fishLocation, catchTime, gearType, selectedSpecies, selectedMetric, retained, returned) {
+		try {
+			const statement = await db.prepareAsync('INSERT INTO Catch(latitude, longitude, date, gearType, species, metric, retained, returned ) VALUES (?,?,?,?,?,?,?,?)');
+			await statement.executeAsync([fishLocation.coords.latitude, fishLocation.coords.longitude, catchTime.toISOString() , gearType, selectedSpecies, selectedMetric, retained, returned]);
+		} catch (error) {
+			console.log('Error while adding catch : ', error);
+		}
+		setSelectedSpecies(false)
+		setSelectedMetric(false)
+		setRetained(false)
+		setReturned(false)
+	}
 
 	async function handleLocationClick() {
 		let curloc = await Location.getCurrentPositionAsync()
@@ -309,13 +341,13 @@ export default function HomeScreen() {
 						<Button
 							title="Add Species"
 							color="#008000"
-							onPress={() => handleDeleteClick("all")}
+								onPress={() => handleStoreData(fishLocation, catchTime, gearType, selectedSpecies, selectedMetric, retained, returned)}
 						/>
 						<ThemedView style={{ marginLeft: 40 }}>
 							<Button
 								title="Add Another Species"
 								color="#008000"
-								onPress={() => handleDeleteClick("species")}
+									onPress={() => handleStoreDataAdditional(fishLocation, catchTime, gearType, selectedSpecies, selectedMetric, retained, returned)}
 							/>
 						</ThemedView>
 					</ThemedView>
