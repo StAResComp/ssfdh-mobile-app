@@ -43,6 +43,11 @@ export default function HomeScreen() {
 		setCatchTime(currtime)
 	}
 
+	async function handleShowMap() {
+		const offlinePacks = await MapLibreGL.offlineManager.getPacks();
+		console.log(offlinePacks)
+	}
+
 	async function onMapLocation () {
 		let curloc = await Location.getCurrentPositionAsync()
 		setMapLocation(curloc)
@@ -206,14 +211,15 @@ export default function HomeScreen() {
 								style={styles.map}
 								logoEnabled={false}
 								onPress={mapOnPress}
-							 	styleURL="https://demotiles.maplibre.org/style.json"
+								styleURL="https://demotiles.maplibre.org/style.json"
+								//styleURL="https://fishing-test.st-andrews.ac.uk/geoserver/gwc/service/wmts?SERVICE=WMTS&&VERSION=1.0.0&REQUEST=GetTile&layer=scotland_mpa&TILEMATRIX=EPSG:900913:{z}&TILEMATRIXSET=EPSG:900913&FORMAT=application/vnd.mapbox-vector-tile&TILECOL={x}&TILEROW={y}"
 							>
-								<MapLibreGL.Camera centerCoordinate={[-128.32801214367845, -24.361464638078317]} zoomLevel={7} />
+								<MapLibreGL.Camera centerCoordinate={[-130.10078317328868, -25.066344018762607]} zoomLevel={10} />
 							</MapLibreGL.MapView>
 				<Button
 					title="Pretend Map"
 					color="#008000"
-					onPress={() => onMapLocation()}
+					onPress={() => handleShowMap()}
 				/>
 			</ThemedView>
 			<ThemedView style={{ flexDirection: 'column', marginTop: 80 }}>

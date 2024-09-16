@@ -7,7 +7,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { useSQLiteContext } from 'expo-sqlite';
-
+import MapLibreGL from '@maplibre/maplibre-react-native';
 
 export default function HomeScreen() {
 	const [devConnected, setDevConnected] = useState(true);
@@ -16,12 +16,34 @@ export default function HomeScreen() {
 	const [tracking, setTracking] = useState(false);
 	const db = useSQLiteContext();
 	const LOCATION_TASK_NAME = 'background-location-task';
+	const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);
+	const errorListener = (offlineRegion, err) => console.log(offlineRegion, err);
 
 	async function fetchlocation() {
 		let { foregroundStatus } = await Location.requestForegroundPermissionsAsync();
 		let { backgroundStatus } = await Location.requestBackgroundPermissionsAsync()
 	}
 	fetchlocation();
+
+
+	async function handleGetMap(progressListener, errorListener) {
+		await MapLibreGL.offlineManager.createPack({
+			name: 'PitcairnPack',
+			styleURL:'https://fishing-test.st-andrews.ac.uk/geoserver/gwc/service/wmts?SERVICE=WMTS&&VERSION=1.0.0&REQUEST=GetTile&layer=ssfdh:scotland_mpa&TILEMATRIX=EPSG:900913:{z}&TILEMATRIXSET=EPSG:900913&FORMAT=application/vnd.mapbox-vector-tile&TILECOL={x}&TILEROW={y}',
+			minZoom: 6,
+			maxZoom: 12,
+			bounds: [[-128.03063359873957, -23.658636827301535], [-130.42936197297047, -25.238391606794014]]
+		}, progressListener, errorListener)
+	}
+
+	async function handleShowMap() {
+		const offlinePacks = await MapLibreGL.offlineManager.getPacks();
+		console.log(offlinePacks)
+	}
+
+	async function handleDeleteMap() {
+		await MapLibreGL.offlineManager.deletePack('PitcairnPack')
+	}
 
 	async function handleLocationStartClick() {
 		Alert.alert('Location Tracking Started')
@@ -137,16 +159,23 @@ export default function HomeScreen() {
 			<ThemedView style={{ flexDirection: 'row' }}>
 				<ThemedView>
 					<Button
-						title="get DB Catch"
+						title="get Map"
 						color="#ff0000"
-						onPress={() => getCatch()}
+						onPress={() => handleGetMap(progressListener, errorListener)}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
-						title="delete Locations"
+						title="show Map"
 						color="#ff0000"
-						onPress={() => deleteLocations()}
+						onPress={() => handleShowMap()}
+					/>
+				</ThemedView>
+				<ThemedView style={{ marginLeft: 20 }}>
+					<Button
+						title="DleteMap"
+						color="#ff0000"
+						onPress={() => handleDeleteMap()}
 					/>
 				</ThemedView>
 			</ThemedView>
