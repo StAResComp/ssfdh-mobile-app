@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Button, Pressable, TextInput, useColorScheme,Switch } from 'react-native';
-import { useState} from 'react';
+import { useState, useEffect} from 'react';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -8,65 +8,82 @@ import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MapLibreGL from '@maplibre/maplibre-react-native';
 import { useSQLiteContext } from 'expo-sqlite';
+import uuid from 'react-native-uuid';
 
 MapLibreGL.setAccessToken(null);
 
+interface fLocation {
+	latitude: number;
+	longitude: number;
+	
+}
+
 export default function HomeScreen() {
-	const [fishLocation, setfishLocation] = useState(false); 
-	const [mapLocation, setMapLocation] = useState(false); 
-	const [catchTime, setCatchTime] = useState(false); 
-	const [gearType, setGearType] = useState(false); 
-	const [selectedSpecies, setSelectedSpecies] = useState(false);
-	const [showMap, setShowMap] = useState(false);
-	const[date, setDate] = useState(new Date());
-	const [mode, setMode] = useState('date');
-	const [show, setShow] = useState(false);
-	const [retRun, setRetRun] = useState(false);
-	const [indBulk, setIndBulk] = useState(false);
-	const [optionalBulk, setOptionalBulk] = useState(false);
-	const [bulkType, setBulkType] = useState(false);
-	const [indNum, setIndNum] = useState(false);
-	const [bulkNum, setBulkNum] = useState(false);
+	const [fishLocation, setfishLocation] = useState<fLocation >(); 
+	const [mapLocation, setMapLocation] = useState<fLocation>(); 
+	const [hasLocation, setHasLocation] = useState<boolean>(false); 
+	const [catchTime, setCatchTime] = useState<any>(false); 
+	const [gearType, setGearType] = useState<string | boolean>(false); 
+	const [gear, setGear] = useState<any>(false);
+	const [selectedSpecies, setSelectedSpecies] = useState<string | boolean>(false);
+	const [showMap, setShowMap] = useState<boolean>(false);
+	const [date, setDate] = useState<any>(new Date());
+	const [mode, setMode] = useState<any>('date');
+	const [show, setShow] = useState<boolean>(false);
+	const [retRun, setRetRun] = useState<string | boolean>(false);
+	const [indBulk, setIndBulk] = useState<string | boolean>(false);
+	const [optionalBulk, setOptionalBulk] = useState<any>(false);
+	const [bulkType, setBulkType] = useState<string | boolean>(false);
+	const [indNum, setIndNum] = useState<any>(false);
+	const [optionalLengths, setOptionalLengths] = useState<boolean>(true);
+	const [bulkNum, setBulkNum] = useState<any>(false);
+	const [gearList, setGearList] = useState<any>(false);
+	const [isAccurateInd, setIsAccurateInd] = useState<boolean>(true);
+	const [isAccurateBulk, setIsAccurateBulk] = useState<boolean>(false);
+	const [isPersonal, setIsPersonal] = useState<boolean>(false);
+	const [currLength, setCurrlength] = useState<any>();
+	const [lengthList, setLengthList] = useState<any[] | boolean>();
 
-	const [isAccurate, setIsAccurate] = useState(false);
-	const toggleSwitch = () => setIsAccurate(previousState => !previousState);
 
+	const toggleSwitchInd = () => setIsAccurateInd(previousState => !previousState);
+	const toggleSwitchBulk = () => setIsAccurateBulk(previousState => !previousState);
 
 	const db = useSQLiteContext();
 	const textColor = { dark: '#ECEDEE', light: '#11181C' }
 	const colorScheme = useColorScheme() ?? 'light';
 
+
+	const fetchGear = async () => {
+		const data = await db.getAllAsync('SELECT * FROM gear WHERE visible = 1');
+		setGearList(data);
+	}
+
+	useEffect(() => {
+		fetchGear()
+	}, [gearType]);
+
 	async function handleLocationClick() {
 		let curloc = await Location.getCurrentPositionAsync()
 		const currtime = new Date();
-		setfishLocation(curloc)
+		setfishLocation({ latitude: curloc.coords.latitude, longitude: curloc.coords.longitude })
 		setCatchTime(currtime)
+		setHasLocation(true)
 	}
-
-	async function handleShowMap() {
-		const offlinePacks = await MapLibreGL.offlineManager.getPacks();
-		console.log(offlinePacks)
-	}
-
-	async function onMapLocation () {
-		let curloc = await Location.getCurrentPositionAsync()
-		setMapLocation(curloc)
-	};
-
 
 	const handleMapDate = () => {
 		setfishLocation(mapLocation)
 		setShowMap(false)
+		setHasLocation(true)
 	};
 
-	const onDateChange = (event, selectedDate) => {
+	const onDateChange = (event: any, selectedDate: any) => {
 		const currentDate = selectedDate;
 		setDate(currentDate);
 		setCatchTime(currentDate)
 		setShow(false);
 	};
 
-	const showMode = (currentMode) => {
+	const showMode = (currentMode: any) => {
 		setShow(true);
 		setMode(currentMode);
 	};
@@ -79,75 +96,108 @@ export default function HomeScreen() {
 		showMode('time');
 	};
 
-	function mapOnPress(event) {
+	function mapOnPress(event:any) {
 		const { geometry, properties } = event;
-		console.log(geometry)
-		/*this.setState({
+		setMapLocation({ latitude: geometry.coordinates[1], longitude: geometry.coordinates[0] })
+		/*
 			latitude: geometry.coordinates[1],
 			longitude: geometry.coordinates[0],
 			screenPointX: properties.screenPointX,
 			screenPointY: properties.screenPointY,
-		});*/
+		*/
 	}
 
-	const handleIndividualChange = (text) => {
+	const handleIndividualChange = (text: any) => {
 		setIndNum(text)
 	}
-	const handleBulkChange = (text) => {
+	const handleBulkChange = (text: any) => {
 		setBulkNum(text)
 	}
-
-
-	const handleGearClick = (type) => {
-		setGearType(type)
+	const handlePersonalChange = (text: any) => {
+		setIsPersonal(text)
+	}
+	const handleLengthChange = (text: any) => {
+		setCurrlength(text)
 	}
 
 
-	async function handleStoreData(fishLocation, catchTime, gearType, selectedSpecies, retRun, bulkType, indBulk, indNum, bulkNum,isAccurate) {
-		/*try {
-			const statement = await db.prepareAsync('INSERT INTO Catch(latitude, longitude, date, gearType, species, metric, retained, returned ) VALUES (?,?,?,?,?,?,?,?)');
-			await statement.executeAsync([fishLocation.coords.latitude, fishLocation.coords.longitude, catchTime.toISOString(), gearType, selectedSpecies, selectedMetric, retained, returned]);
+	const handleAddLength = () => {
+		let lengthUID = uuid.v4()
+		if (lengthList){
+			setLengthList([...lengthList, { length: currLength, lengthUuid: lengthUID }])
+		} else {
+			setLengthList([{ length: currLength, lengthUuid: lengthUID }])
+		}
+		console.log([lengthList])
+	}
+
+	const handleDeleteLength = () => {
+		let tempLengthList = lengthList.slice(0,-1);  
+		setLengthList([tempLengthList])
+		console.log([tempLengthList])
+	}
+
+
+
+
+	async function handleStoreData(fishLocation: any, catchTime: any, gear: any, selectedSpecies: any, retRun: any, bulkType: any, indNum: any, lengthList: any, bulkNum: any, isAccurateInd: any, isAccurateBulk: any, isPersonal: any) {
+		let catchUUID = uuid.v4()
+		try {
+			const statement = await db.prepareAsync('INSERT INTO Catch(catchUuid, latitude, longitude, date, gearUuid, species, retRun, indNum, lengths, bulkType, bulkNum, accurateInd,accurateBulk, personal ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies, retRun, indNum, lengthList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal]);
 		} catch (error) {
 			console.log('Error while adding catch : ', error);
-		}*/
-		setfishLocation(false)
+		}
+		setfishLocation({ latitude: 0, longitude: 0 })
 		setCatchTime(false)
 		setGearType(false)
+		setGear(false)
 		setSelectedSpecies(false)
 		setRetRun(false)
 		setIndBulk(false)
 		setIndNum(false)
 		setBulkType(false)
+		setOptionalBulk(false)
 		setBulkNum(false)
-		setIsAccurate(false)
+		setIsAccurateInd(false)
+		setIsAccurateBulk(false)
 		setShowMap(false)
+		setLengthList(false)
+		setHasLocation(false)
 	}
 
 
-	async function handleStoreDataAdditional(fishLocation, catchTime, gearType, selectedSpecies, retRun, bulkType, indBulk, indNum, bulkNum, isAccurate) {
-		/*try {
-			const statement = await db.prepareAsync('INSERT INTO Catch(latitude, longitude, date, gearType, species, metric, retained, returned ) VALUES (?,?,?,?,?,?,?,?)');
-			await statement.executeAsync([fishLocation.coords.latitude, fishLocation.coords.longitude, catchTime.toISOString(), gearType, selectedSpecies, selectedMetric, retained, returned]);
+	async function handleStoreDataAdditional(fishLocation: any, catchTime: any, gear: any, selectedSpecies: any, retRun: any, bulkType: any, indNum: any, lengthList:any, bulkNum: any, isAccurateInd: any, isAccurateBulk: any, isPersonal:any) {
+		let catchUUID = uuid.v4()
+		try {
+			const statement = await db.prepareAsync('INSERT INTO Catch(catchUuid, latitude, longitude, date, gearUuid, species, retRun, indNum, lengths,  bulkType, bulkNum, accurateInd,accurateBulk, personal ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
+			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies, retRun, indNum, lengthList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal]);
 		} catch (error) {
 			console.log('Error while adding catch : ', error);
-		}*/
+		}
 		setSelectedSpecies(false)
 		setRetRun(false)
 		setIndBulk(false)
 		setIndNum(false)
+		setOptionalBulk(false)
 		setBulkType(false)
 		setBulkNum(false)
-		setIsAccurate(false)
+		setIsAccurateInd(false)
+		setIsAccurateBulk(false)
 		setShowMap(false)
+		setLengthList(false)
 	}
 
 
-	const handleDeleteClick = (deleteType) => {
+	const handleDeleteClick = (deleteType: any) => {
 		if (deleteType == "location") {
-			setfishLocation(false)
+			setfishLocation({ latitude: 0, longitude: 0 })
 			setCatchTime(false)
-		} else if (deleteType == "gear") {
+			setHasLocation(false)
+		} else if (deleteType == "gearType") {
 			setGearType(false)
+		} else if (deleteType == "gear") {
+			setGear(false)
 		}
 		else if (deleteType == "species") {
 			setSelectedSpecies(false)
@@ -158,11 +208,15 @@ export default function HomeScreen() {
 			setBulkType(false)
 			setIndNum(false)
 			setBulkNum(false)
-			setIsAccurate(false)
-		}else if (deleteType == "all") {
-			setfishLocation(false)
+			setIsAccurateInd(false)
+			setIsAccurateBulk(false)
+			setLengthList(false)
+		} else if (deleteType == "all") {
+			setfishLocation({ latitude: 0, longitude: 0 })
+			setHasLocation(false)
 			setCatchTime(false)
 			setGearType(false)
+			setGear(false)
 			setSelectedSpecies(false)
 			setRetRun(false)
 			setIndBulk(false)
@@ -171,7 +225,9 @@ export default function HomeScreen() {
 			setIndNum(false)
 			setBulkNum(false)
 			setShowMap(false)
-			setIsAccurate(false)
+			setIsAccurateInd(false)
+			setIsAccurateBulk(false)
+			setLengthList(false)
 		} 
 	}
 
@@ -185,7 +241,7 @@ export default function HomeScreen() {
 			/>
 		}>
 		<ThemedView>
-		{(!fishLocation && !showMap) && (
+		{(!hasLocation && !showMap) && (
 		<ThemedView style={{ flexDirection: 'column', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
 			<ThemedText type="title"> CATCH DATA INPUT </ThemedText>
 			<ThemedView style={{ flexDirection: 'column', marginTop: 80 }}>
@@ -212,15 +268,9 @@ export default function HomeScreen() {
 								logoEnabled={false}
 								onPress={mapOnPress}
 								styleURL="https://demotiles.maplibre.org/style.json"
-								//styleURL="https://fishing-test.st-andrews.ac.uk/geoserver/gwc/service/wmts?SERVICE=WMTS&&VERSION=1.0.0&REQUEST=GetTile&layer=scotland_mpa&TILEMATRIX=EPSG:900913:{z}&TILEMATRIXSET=EPSG:900913&FORMAT=application/vnd.mapbox-vector-tile&TILECOL={x}&TILEROW={y}"
 							>
 								<MapLibreGL.Camera centerCoordinate={[-130.10078317328868, -25.066344018762607]} zoomLevel={10} />
 							</MapLibreGL.MapView>
-				<Button
-					title="Pretend Map"
-					color="#008000"
-					onPress={() => handleShowMap()}
-				/>
 			</ThemedView>
 			<ThemedView style={{ flexDirection: 'column', marginTop: 80 }}>
 				<ThemedView style={{marginBottom: 60}}>
@@ -237,8 +287,8 @@ export default function HomeScreen() {
 						onChange={onDateChange}
 					/>
 						)}
-				{mapLocation && (
-					<ThemedText type="defaultSemiBold"> Latitude: {mapLocation.coords.latitude} Longitude:{mapLocation.coords.longitude}  </ThemedText>
+				{(mapLocation && !fishLocation) && (
+					<ThemedText type="defaultSemiBold"> Latitude: {mapLocation.latitude} Longitude:{mapLocation.longitude}  </ThemedText>
 						)}
 				{catchTime && (
 					<ThemedText type="defaultSemiBold"> Time: {catchTime.toLocaleString()} </ThemedText>
@@ -257,10 +307,10 @@ export default function HomeScreen() {
 			</ThemedView>
 		</ThemedView>
 	)}
-		{(fishLocation && !gearType) && (
+		{(hasLocation && !gearType) && (
 			<ThemedView>
 				<ThemedView style={{flexDirection: 'column', marginTop: 20, justifyContent: 'center', alignItems: 'center'}}>
-					<Pressable onPress={() => { handleGearClick("rod"); }} style={({ pressed }) => [
+							<Pressable onPress={() => { setGearType("rod"); }} style={({ pressed }) => [
 						{
 						width: 150,
 						height: 150
@@ -269,7 +319,7 @@ export default function HomeScreen() {
 						<Image source={require('@/assets/images/rod_line_transparent.png')} style={{ width: 150, height: 150 }} />
 							</Pressable>
 			
-					<Pressable onPress={() => { handleGearClick("longline"); }} style={({ pressed }) => [
+							<Pressable onPress={() => { setGearType("longline") }} style={({ pressed }) => [
 						{
 						width: 150,
 						height: 150,
@@ -277,7 +327,7 @@ export default function HomeScreen() {
 						]}>
 							<Image source={require('@/assets/images/longline_transparent.png')} style={{ width: 150, height: 150 }} />
 					</Pressable>
-					<Pressable onPress={() => { handleGearClick("net"); }} style={({ pressed }) => [
+							<Pressable onPress={() => { setGearType("net"); }} style={({ pressed }) => [
 						{
 						width: 150,
 						height: 150,
@@ -294,8 +344,37 @@ export default function HomeScreen() {
 					/>
 				</ThemedView>
 			</ThemedView>
-		)}
-		{(gearType && !selectedSpecies) && (
+				)}
+			{(gearType && !gear) && (
+				<ThemedView>
+					<ThemedText type="defaultSemiBold"> Gear Select: </ThemedText>
+					<Picker
+						style={{ color: textColor[colorScheme] }}
+						mode="dropdown"
+						dropdownIconColor={textColor[colorScheme]}
+						selectedValue={gear}
+						onValueChange={(itemValue, itemIndex) =>
+							setGear(itemValue)
+						}>
+							<Picker.Item label="Gear " value="Gear" />
+							{gearList.filter((gear: any) => gear.type == gearType).map((gear: any) => {
+								return (
+									<Picker.Item key={gear.gearUuid} label={gear.name} value={gear} />
+								);
+							})}
+
+
+					</Picker>
+					<ThemedView style={{ marginTop: 240, marginBottom: 20 }}>
+						<Button
+							title="Reselect Gear Type"
+							color="#ff0000"
+							onPress={() => handleDeleteClick("gearType")}
+						/>
+					</ThemedView>
+				</ThemedView>		
+				)}
+		{(gear && !selectedSpecies) && (
 			<ThemedView>
 				<ThemedText type="defaultSemiBold"> Species Select: </ThemedText>
 					<Picker
@@ -359,10 +438,45 @@ export default function HomeScreen() {
 				</Picker>
 				{(indBulk == "Individual") && (
 				<ThemedView>
-					<ThemedView style={{ marginTop: 30 }}>
-						<ThemedText type="defaultSemiBold"> Retained: </ThemedText>
-					<TextInput keyboardType='numeric' value={indNum} style={{ color: textColor[colorScheme] }} placeholder="Retained" placeholderTextColor={textColor[colorScheme]} onChangeText={handleIndividualChange} />
-					</ThemedView> 
+					<ThemedView style={{ flexDirection: 'row', marginTop: 30 }}>
+						<ThemedView>
+							<ThemedText type="defaultSemiBold"> Number: </ThemedText>
+							<TextInput keyboardType='numeric' value={indNum} style={{ color: textColor[colorScheme] }} placeholder="Number" placeholderTextColor={textColor[colorScheme]} onChangeText={handleIndividualChange} />
+						</ThemedView> 
+						<ThemedView style={{ marginLeft: 100 }}>
+								<ThemedText type="defaultSemiBold">Accurate: </ThemedText>
+								<Switch
+									trackColor={{ false: '#767577', true: '#81b0ff' }}
+									thumbColor={isAccurateInd ? '#f5dd4b' : '#f4f3f4'}
+									onValueChange={toggleSwitchInd}
+									value={isAccurateInd}
+										/>
+						</ThemedView>
+				</ThemedView> 
+					{(optionalLengths) && (
+									<>
+										<ThemedView style={{ marginTop: 40 }} >
+											<ThemedText type="defaultSemiBold"> length: </ThemedText>
+											<TextInput keyboardType='numeric' value={currLength} style={{ color: textColor[colorScheme] }} placeholder="length" placeholderTextColor={textColor[colorScheme]} onChangeText={handleLengthChange} />
+
+											<ThemedView style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
+												<Button
+													title="Add length"
+													color="#008000"
+													onPress={() => handleAddLength()}
+												/>
+												<ThemedView style={{ marginLeft: 80 }}>
+												<Button
+													title="Remove length"
+													color="#ff0000"
+													onPress={() => handleDeleteLength()}
+													/>
+												</ThemedView>
+											</ThemedView>
+										</ThemedView> 
+									</>
+								)}
+				
 					{(!optionalBulk) && (
 						<>	
 						<ThemedView style={{ marginTop: 40, marginBottom: 10 }}>
@@ -398,14 +512,23 @@ export default function HomeScreen() {
 									<ThemedText type="defaultSemiBold">Accurate: </ThemedText>
 									<Switch
 										trackColor={{ false: '#767577', true: '#81b0ff' }}
-										thumbColor={isAccurate ? '#f5dd4b' : '#f4f3f4'}
-										onValueChange={toggleSwitch}
-										value={isAccurate}
+										thumbColor={isAccurateBulk ? '#f5dd4b' : '#f4f3f4'}
+										onValueChange={toggleSwitchBulk}
+										value={isAccurateBulk}
 									/>
 								</ThemedView>
 							</ThemedView>
 						</ThemedView>
-					)}
+								)}
+					<ThemedView style={{ flexDirection: 'row', marginTop: 40 }}>
+						<ThemedText type="defaultSemiBold">Personal: </ThemedText>
+							<Switch
+								trackColor={{ false: '#767577', true: '#81b0ff' }}
+								thumbColor={isPersonal ? '#f5dd4b' : '#f4f3f4'}
+								onValueChange={handlePersonalChange}
+								value={isPersonal}
+							/>
+					</ThemedView>
 				</ThemedView>
 				)}
 				{(indBulk == "Bulk") && (
@@ -432,11 +555,20 @@ export default function HomeScreen() {
 							<ThemedText type="defaultSemiBold">Accurate: </ThemedText>
 							<Switch
 								trackColor={{ false: '#767577', true: '#81b0ff' }}
-								thumbColor={isAccurate ? '#f5dd4b' : '#f4f3f4'}
-								onValueChange={toggleSwitch}
-								value={isAccurate}
+								thumbColor={isAccurateBulk ? '#f5dd4b' : '#f4f3f4'}
+								onValueChange={toggleSwitchBulk}
+								value={isAccurateBulk}
 							/>
 						</ThemedView>
+					</ThemedView>
+					<ThemedView style={{ flexDirection: 'row', marginTop: 40 }}>
+							<ThemedText type="defaultSemiBold">Personal: </ThemedText>
+								<Switch
+									trackColor={{ false: '#767577', true: '#81b0ff' }}
+									thumbColor={isPersonal ? '#f5dd4b' : '#f4f3f4'}
+									onValueChange={handlePersonalChange}
+									value={isPersonal}
+								/>
 					</ThemedView>
 				</ThemedView>
 				)}
@@ -450,78 +582,53 @@ export default function HomeScreen() {
 			</ThemedView>
 			)}
 				
-			{(fishLocation && !showMap) && (
-				<ThemedText type="defaultSemiBold"> Latitude: {fishLocation.coords.latitude} Longitude:{fishLocation.coords.longitude}  </ThemedText>
-			)}
-			{(catchTime && !showMap) && (
-				<ThemedText type="defaultSemiBold"> Time: {catchTime.toLocaleString()} </ThemedText>
-				)}
-			{gearType && (
-				<ThemedText type="defaultSemiBold"> Gear: {gearType} </ThemedText>
-				)}
-			{selectedSpecies && (
-				<ThemedText type="defaultSemiBold"> Species: {selectedSpecies} </ThemedText>
-				)}
-			{(retRun) && (
-				<ThemedText type="defaultSemiBold"> Retained/Returned: {retRun} </ThemedText>
-				)}
-			{(indNum && !bulkNum) && (
-					<ThemedText type="defaultSemiBold"> Individuals: {indNum} </ThemedText>
-				)}
-			{(bulkType) && (
-					<ThemedText type="defaultSemiBold"> Bulk Type: {bulkType} </ThemedText>
-				)}
-			{(bulkNum && !indNum) && (
-					<ThemedText type="defaultSemiBold"> Bulk Number: {bulkNum} </ThemedText>
-				)}
-			{(bulkNum && indNum) && (
-					<ThemedText type="defaultSemiBold"> Individuals: {indNum} Bulk Number: {bulkNum} </ThemedText>
-				)}
-			{(isAccurate && (indNum || bulkNum )) && (
-					<ThemedText type="defaultSemiBold"> Accurate </ThemedText>
-				)}
-			{(!isAccurate && (indNum || bulkNum)) && (
-					<ThemedText type="defaultSemiBold"> Estimated </ThemedText>
-				)}
-		{(indBulk == "Individual" && indNum ) && (
-			<ThemedView style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
-				<Button
-					title="Add Species"
-					color="#008000"
-					onPress={() => handleDeleteClick("all")}
-				/>
-			<ThemedView style={{ marginLeft: 40 }}>
-				<Button
-					title="Add Another Species"
-					color="#008000"
-					onPress={() => handleDeleteClick("all")}
-				/>
-				</ThemedView>
-					</ThemedView>)}
-		{(indBulk == "Bulk" && bulkNum) && (
-			<ThemedView style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
-				<Button
-					title="Add Species"
-					color="#008000"
-					onPress={() => handleDeleteClick("all")}
-				/>
-				<ThemedView style={{ marginLeft: 40 }}>
-					<Button
-						title="Add Another Species"
-						color="#008000"
-						onPress={() => handleDeleteClick("all")}
-					/>
-				</ThemedView>
-			</ThemedView>)}
-
-		{(gearType) && (
+			{(hasLocation && !showMap) ? (<ThemedText type="defaultSemiBold"> Latitude: {fishLocation.latitude} Longitude:{fishLocation.longitude}</ThemedText>): null}
+			{(catchTime && !showMap) ? (<ThemedText type="defaultSemiBold"> Time: {catchTime.toLocaleString()} </ThemedText>):null}
+			{gearType ? (<ThemedText type="defaultSemiBold"> Gear: {gearType} </ThemedText>):null}
+			{gear ? (<ThemedText type="defaultSemiBold"> Gear: {gear.name} </ThemedText>):null}
+			{selectedSpecies ? (<ThemedText type="defaultSemiBold"> Species: {selectedSpecies} </ThemedText>):null}
+			{(retRun) ? (<ThemedText type="defaultSemiBold"> Retained/Returned: {retRun} </ThemedText>):null}
+			{(indNum && !bulkNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} </ThemedText>):null}
+			{(bulkType) ? (<ThemedText type="defaultSemiBold"> Bulk Type: {bulkType} </ThemedText>):null}
+			{(bulkNum && !indNum) ? (<ThemedText type="defaultSemiBold"> Bulk Number: {bulkNum} </ThemedText>):null}
+			{(bulkNum && indNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} Bulk Number: {bulkNum} </ThemedText>) : null}
+				{(lengthList) && <ThemedView style={{ flexDirection: 'row' }}>
+					<ThemedText type="defaultSemiBold"> Lengths: </ThemedText >
+					{lengthList.map((length: any) => {
+						return (
+							<ThemedText type = "defaultSemiBold">  {length.length} </ThemedText >
+						);
+					})}
+					</ThemedView>
+					}
+			{(indBulk == "Individual" && ((!optionalBulk && isAccurateInd) || (optionalBulk && (isAccurateInd && isAccurateBulk))) && indNum) || (indBulk == "Bulk" && isAccurateBulk && bulkNum) ? (<ThemedText type="defaultSemiBold"> Accurate </ThemedText>) : null}
+			{(indBulk == "Individual" && ((!optionalBulk && !isAccurateInd) || (optionalBulk && (!isAccurateInd || !isAccurateBulk))) && indNum) || (indBulk == "Bulk" && !isAccurateBulk && bulkNum) ? (<ThemedText type="defaultSemiBold"> Estimated </ThemedText>):null}
+			{(indBulk && isPersonal) ? (<ThemedText type="defaultSemiBold"> Personal </ThemedText>):null}
+			{(indBulk && !isPersonal) ? (<ThemedText type="defaultSemiBold">Commerical </ThemedText>):null}
+				
+				{(indNum || bulkNum) ? (
+					<ThemedView style={{ flexDirection: 'row', marginTop: 20, justifyContent: 'center', alignItems: 'center' }}>
+						<Button
+							title="Add Species"
+							color="#008000"
+							onPress={() => handleStoreData(fishLocation, catchTime, gear.gearUuid, selectedSpecies, retRun, bulkType, indNum, lengthList, bulkNum, isAccurateInd, isAccurateBulk, isPersonal)}
+						/>
+						<ThemedView style={{ marginLeft: 40 }}>
+							<Button
+								title="Add Another Species"
+								color="#008000"
+								onPress={() => handleStoreDataAdditional(fishLocation, catchTime, gear.gearUuid, selectedSpecies, retRun, bulkType, indNum, lengthList, bulkNum, isAccurateInd, isAccurateBulk, isPersonal)}
+							/>
+						</ThemedView>
+					</ThemedView>):null}
+		{(gearType) ? (
 					<ThemedView style={{ marginTop: 40 }}>
 						<Button
 							title="Back to Start"
 							color="#ff0000"
 							onPress={() => handleDeleteClick("all")}
 						/>
-					</ThemedView>)}
+					</ThemedView>):null}
 		</ThemedView>
     </ParallaxScrollView>
   );

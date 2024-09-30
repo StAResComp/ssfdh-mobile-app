@@ -31,11 +31,19 @@ return (
 			),}}
 		/>
 		<Tabs.Screen
-			name="wildlife"
+			name="gear"
 			options={{
-			title: 'Widlife',
+			title: 'gear',
 			tabBarIcon: ({ color, focused }) => (
 				<TabBarIcon name={focused ? 'image' : 'image-outline'} color={color} />
+				),
+			}} />
+		<Tabs.Screen
+			name="settings"
+			options={{
+				title: 'settings',
+				tabBarIcon: ({ color, focused }) => (
+					<TabBarIcon name={focused ? 'image' : 'image-outline'} color={color} />
 				),
 			}} />
 	</Tabs>

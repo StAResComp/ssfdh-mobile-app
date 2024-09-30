@@ -7,43 +7,19 @@ import NetInfo from '@react-native-community/netinfo';
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { useSQLiteContext } from 'expo-sqlite';
-import MapLibreGL from '@maplibre/maplibre-react-native';
 
 export default function HomeScreen() {
 	const [devConnected, setDevConnected] = useState(true);
 	const [location, setLocation] = useState(null);
-	const [errorMsg, setErrorMsg] = useState(null);
 	const [tracking, setTracking] = useState(false);
 	const db = useSQLiteContext();
 	const LOCATION_TASK_NAME = 'background-location-task';
-	const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);
-	const errorListener = (offlineRegion, err) => console.log(offlineRegion, err);
 
 	async function fetchlocation() {
-		let { foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-		let { backgroundStatus } = await Location.requestBackgroundPermissionsAsync()
+		let  foregroundStatus  = await Location.requestForegroundPermissionsAsync();
+		let  backgroundStatus  = await Location.requestBackgroundPermissionsAsync()
 	}
 	fetchlocation();
-
-
-	async function handleGetMap(progressListener, errorListener) {
-		await MapLibreGL.offlineManager.createPack({
-			name: 'PitcairnPack',
-			styleURL:'https://fishing-test.st-andrews.ac.uk/geoserver/gwc/service/wmts?SERVICE=WMTS&&VERSION=1.0.0&REQUEST=GetTile&layer=ssfdh:scotland_mpa&TILEMATRIX=EPSG:900913:{z}&TILEMATRIXSET=EPSG:900913&FORMAT=application/vnd.mapbox-vector-tile&TILECOL={x}&TILEROW={y}',
-			minZoom: 6,
-			maxZoom: 12,
-			bounds: [[-128.03063359873957, -23.658636827301535], [-130.42936197297047, -25.238391606794014]]
-		}, progressListener, errorListener)
-	}
-
-	async function handleShowMap() {
-		const offlinePacks = await MapLibreGL.offlineManager.getPacks();
-		console.log(offlinePacks)
-	}
-
-	async function handleDeleteMap() {
-		await MapLibreGL.offlineManager.deletePack('PitcairnPack')
-	}
 
 	async function handleLocationStartClick() {
 		Alert.alert('Location Tracking Started')
@@ -64,32 +40,7 @@ export default function HomeScreen() {
 		} else Alert.alert('Location Tracking Already Ended')
 	}
 
-	const getLocations = async () => {
-		try {
-			const allRows = await db.getAllAsync('SELECT * FROM locations');
-			console.log(allRows)
-		} catch (error) {
-			console.log('Error while getting locations : ', error);
-		}
-	}
-
-	const getCatch = async () => {
-		try {
-			const allRows = await db.getAllAsync('SELECT * FROM locations');
-			console.log(allRows)
-		} catch (error) {
-			console.log('Error while getting catch : ', error);
-		}
-	}
-	const deleteLocations = async () => {
-		try {
-			const allRows = await db.getAllAsync('DELETE FROM locations');
-			console.log(allRows)
-		} catch (error) {
-			console.log('Error while deletinglocations : ', error);
-		}
-	}
-	const addLocation = async (locations) => {
+	const addLocation = async (locations:any) => {
 		let currtime = new Date().toISOString();
 		try {
 			const statement = await db.prepareAsync('INSERT INTO locations ( latitude, longitude, speed, heading, altitude, timestamp) VALUES (?,?,?,?,?,?)');
@@ -115,7 +66,6 @@ export default function HomeScreen() {
 			setLocation(locations[0])
 		}
 	});
-
 
 	useEffect(() => {
 		const unsubscribe = NetInfo.addEventListener(state => {
@@ -156,35 +106,12 @@ export default function HomeScreen() {
 			{location && (
 				<ThemedText type="defaultSemiBold"> Latitude: {location.coords.latitude} Longitude:{location.coords.longitude}  </ThemedText>
 			)}
-			<ThemedView style={{ flexDirection: 'row' }}>
-				<ThemedView>
-					<Button
-						title="get Map"
-						color="#ff0000"
-						onPress={() => handleGetMap(progressListener, errorListener)}
-					/>
-				</ThemedView>
-				<ThemedView style={{ marginLeft: 20 }}>
-					<Button
-						title="show Map"
-						color="#ff0000"
-						onPress={() => handleShowMap()}
-					/>
-				</ThemedView>
-				<ThemedView style={{ marginLeft: 20 }}>
-					<Button
-						title="DleteMap"
-						color="#ff0000"
-						onPress={() => handleDeleteMap()}
-					/>
-				</ThemedView>
-			</ThemedView>
 			<ThemedView style={{ flexDirection: 'column', marginTop:60 }}>
 				<ThemedView>
 					<Button
 						title="Submit Data"
 						color="#008000"
-						onPress={() => getLocations()}
+						onPress={() => getCatch()}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginTop: 60 }}>

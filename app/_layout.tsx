@@ -16,34 +16,52 @@ export default function RootLayout() {
 		SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
 	});
 
-	async function initializeDatabase(db) {
+	async function initializeDatabase(db: any) {
 		try {
 			await db.execAsync(`
             PRAGMA journal_mode = WAL;
             CREATE TABLE IF NOT EXISTS locations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                latitude REAL NOT NULL,
-                longitude REAL NOT NULL,
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				latitude REAL NOT NULL,
+				longitude REAL NOT NULL,
 				speed REAL NOT NULL,
 				heading REAL NOT NULL,
 				altitude REAL NOT NULL,
 				timestamp INTEGER NOT NULL
-            );
-        `);
+            );`);
+
 			await db.execAsync(`
-            PRAGMA journal_mode = WAL;
-            CREATE TABLE IF NOT EXISTS catch (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                latitude REAL NOT NULL,
-                longitude REAL NOT NULL,
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS catch (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				catchUuid TEXT NOT NULL,
+				latitude REAL NOT NULL,
+				longitude REAL NOT NULL,
 				date TEXT NOT NULL,
-				gearType TEXT NOT NULL,
+				gearUuid TEXT NOT NULL,
 				species TEXT NOT NULL,
-				metric TEXT NOT NULL,
-				retained TEXT NOT NULL,
-				returned TEXT NOT NULL
-            );
-        `);
+				retRun TEXT NOT NULL,
+				indNum INTEGER,
+				lengths TEXT,
+				bulkType TEXT,
+				bulkNum REAL,
+				accurateInd INTEGER NOT NULL,
+				accurateBulk INTEGER NOT NULL,
+				personal INTEGER NOT NULL,
+				FOREIGN KEY (gearUuid)
+					REFERENCES gear (gearUuid)
+			);`);
+
+			await db.execAsync(`
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS gear (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				gearUuid TEXT NOT NULL,
+				type TEXT NOT NULL,
+				name TEXT NOT NULL,
+				number REAL NOT NULL,
+				visible INTEGER NOT NULL DEFAULT 1
+			);`);
 	
 			console.log('Database initialised')
 		} catch (error) {
