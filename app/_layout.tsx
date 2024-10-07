@@ -42,14 +42,30 @@ export default function RootLayout() {
 				species TEXT NOT NULL,
 				retRun TEXT NOT NULL,
 				indNum INTEGER,
-				lengths TEXT,
+				characteristics TEXT,
 				bulkType TEXT,
 				bulkNum REAL,
 				accurateInd INTEGER NOT NULL,
 				accurateBulk INTEGER NOT NULL,
 				personal INTEGER NOT NULL,
+				shipVer INTEGER NOT NULL,
+				shoreVer INTEGER NOT NULL  DEFAULT 0,
 				FOREIGN KEY (gearUuid)
 					REFERENCES gear (gearUuid)
+			);`);
+
+			await db.execAsync(`
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS catchVerify (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				verifyUuid TEXT NOT NULL,
+				date TEXT NOT NULL,
+				indNum INTEGER,
+				bulkType TEXT,
+				bulkNum REAL,
+				accurateInd INTEGER NOT NULL,
+				accurateBulk INTEGER NOT NULL,
+				verifies TEXT NOT NULL
 			);`);
 
 			await db.execAsync(`

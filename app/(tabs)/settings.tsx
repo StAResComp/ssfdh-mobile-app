@@ -62,6 +62,15 @@ export default function HomeScreen() {
 			console.log('Error while getting catch : ', error);
 		}
 	}
+
+	const deleteCatch = async () => {
+		try {
+			const allRows = await db.getAllAsync('DELETE FROM catch');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while getting catch : ', error);
+		}
+	}
 	
 	return (
 		<ParallaxScrollView
@@ -118,6 +127,32 @@ export default function HomeScreen() {
 						title="show Catch"
 						color="#008000"
 						onPress={() => getCatch()}
+					/>
+				</ThemedView>
+			</ThemedView>
+
+
+			<ThemedText> Phone Data Delete</ThemedText>
+			<ThemedView style={{ flexDirection: 'row', marginBottom: 20 }}>
+				<ThemedView>
+					<Button
+						title="show Loc"
+						color="#008000"
+						onPress={() => getLocations()}
+					/>
+				</ThemedView>
+				<ThemedView style={{ marginLeft: 20 }}>
+					<Button
+						title="show Gear"
+						color="#008000"
+						onPress={() => getGear()}
+					/>
+				</ThemedView>
+				<ThemedView style={{ marginLeft: 20 }}>
+					<Button
+						title="delete Catch"
+						color="#008000"
+						onPress={() => deleteCatch()}
 					/>
 				</ThemedView>
 			</ThemedView>
