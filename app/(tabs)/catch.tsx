@@ -24,7 +24,7 @@ export default function HomeScreen() {
 	const [catchTime, setCatchTime] = useState<any>(); 
 	const [gearType, setGearType] = useState<string | boolean>(); 
 	const [gear, setGear] = useState<any>();
-	const [selectedSpecies, setSelectedSpecies] = useState<string | boolean>();
+	const [selectedSpecies, setSelectedSpecies] = useState<any>();
 	const [showMap, setShowMap] = useState<boolean>();
 	const [date, setDate] = useState<any>(new Date());
 	const [mode, setMode] = useState<any>('date');
@@ -36,6 +36,7 @@ export default function HomeScreen() {
 	const [indNum, setIndNum] = useState<any>();
 	const [bulkNum, setBulkNum] = useState<any>();
 	const [gearList, setGearList] = useState<any>();
+	const [speciesList, setSpeciesList] = useState<any>();
 	const [isAccurateInd, setIsAccurateInd] = useState<boolean>(false);
 	const [isAccurateBulk, setIsAccurateBulk] = useState<boolean>(false);
 	const [isPersonal, setIsPersonal] = useState<boolean>(false);
@@ -57,13 +58,21 @@ export default function HomeScreen() {
 		setGearList(data);
 	}
 
+	const fetchSpecies = async () => {
+		const data = await db.getAllAsync('SELECT * FROM species ORDER BY score DESC');
+		setSpeciesList(data);
+	}
+
 	useEffect(() => {
 		fetchGear()
+		fetchSpecies()
 	}, [gearType]);
 
 	useEffect(() => {
 		if (retRun == "Returned") { setIsVerfified(true)}
 	}, [retRun]);
+
+	console.log(selectedSpecies)
 
 	async function handleLocationClick() {
 		let curloc = await Location.getCurrentPositionAsync()
@@ -153,9 +162,12 @@ export default function HomeScreen() {
 
 	async function handleStoreData(fishLocation: any, catchTime: any, gear: any, selectedSpecies: any, retRun: any, bulkType: any, indNum: any, charList: any, bulkNum: any, isAccurateInd: any, isAccurateBulk: any, isPersonal: any, isVerified: any) {
 		let catchUUID = uuid.v4()
+		let score = (selectedSpecies.score + 1) 
 		try {
 			const statement = await db.prepareAsync('INSERT INTO Catch(catchUuid, latitude, longitude, date, gearUuid, species, retRun, indNum, characteristics, bulkType, bulkNum, accurateInd,accurateBulk, personal, shipVer ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies, retRun, indNum, charList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified]);
+			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies.commonName, retRun, indNum, charList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified]);
+			const statement2 = await db.prepareAsync('UPDATE species SET score = ? WHERE speciesUuid = ?');
+			await statement2.executeAsync([score, selectedSpecies.speciesUuid]);
 		} catch (error) {
 			console.log('Error while adding catch : ', error);
 		}
@@ -164,6 +176,7 @@ export default function HomeScreen() {
 		setGearType(false)
 		setGear(false)
 		setSelectedSpecies(false)
+		setSpeciesList(false)
 		setRetRun(false)
 		setIndBulk(false)
 		setIndNum(false)
@@ -177,14 +190,19 @@ export default function HomeScreen() {
 		setHasLocation(false)
 		setIndLength(false)
 		setIndWeight(false)
+		fetchGear()
+		fetchSpecies()
 	}
 
 
 	async function handleStoreDataAdditional(fishLocation: any, catchTime: any, gear: any, selectedSpecies: any, retRun: any, bulkType: any, indNum: any, lengthList: any, bulkNum: any, isAccurateInd: any, isAccurateBulk: any, isPersonal: any, isVerified: any) {
 		let catchUUID = uuid.v4()
+		let score = (selectedSpecies.score + 1) 
 		try {
 			const statement = await db.prepareAsync('INSERT INTO Catch(catchUuid, latitude, longitude, date, gearUuid, species, retRun, indNum, characteristics,  bulkType, bulkNum, accurateInd,accurateBulk, personal,shipVer) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies, retRun, indNum, lengthList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified]);
+			await statement.executeAsync([catchUUID, fishLocation.latitude, fishLocation.longitude, catchTime.toISOString(), gear, selectedSpecies.commonName, retRun, indNum, lengthList, bulkType, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified]);
+			const statement2 = await db.prepareAsync('UPDATE species SET score = ? WHERE speciesUuid = ?');
+			await statement2.executeAsync([score, selectedSpecies.speciesUuid]);
 		} catch (error) {
 			console.log('Error while adding catch : ', error);
 		}
@@ -201,6 +219,8 @@ export default function HomeScreen() {
 		setCharList(false)
 		setIndLength(false)
 		setIndWeight(false)
+		fetchGear()
+		fetchSpecies()
 	}
 
 
@@ -381,9 +401,13 @@ export default function HomeScreen() {
 						dropdownIconColor={textColor[colorScheme]}
 						selectedValue={selectedSpecies}
 						onValueChange={(itemValue, itemIndex) => setSelectedSpecies(itemValue)}
-					>
-					<Picker.Item label="Fish 1" value="fish 1" />
-					<Picker.Item label="Fish 2" value="fish 2" />
+						>
+						<Picker.Item key={"Species"} label={"Species"} value={"Species"} />
+						{speciesList.map((memSpecies: any) => {
+								return (
+									<Picker.Item key={memSpecies.speciesUuid} label={memSpecies.islandName} value={memSpecies} />
+								);
+							})}
 					</Picker>
 					<ThemedView style={{ marginTop: 240, marginBottom: 20}}>
 						<Button
@@ -604,7 +628,7 @@ export default function HomeScreen() {
 			{(catchTime && !showMap) ? (<ThemedText type="defaultSemiBold"> Time: {catchTime.toLocaleString()} </ThemedText>):null}
 			{gearType ? (<ThemedText type="defaultSemiBold"> Gear: {gearType} </ThemedText>):null}
 			{gear ? (<ThemedText type="defaultSemiBold"> Gear: {gear.name} </ThemedText>):null}
-			{selectedSpecies ? (<ThemedText type="defaultSemiBold"> Species: {selectedSpecies} </ThemedText>):null}
+			{selectedSpecies ? (<ThemedText type="defaultSemiBold"> Species: {selectedSpecies.islandName} </ThemedText>):null}
 			{(retRun) ? (<ThemedText type="defaultSemiBold"> Retained/Returned: {retRun} </ThemedText>):null}
 			{(indNum && !bulkNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} </ThemedText>):null}
 			{(bulkType) ? (<ThemedText type="defaultSemiBold"> Bulk Type: {bulkType} </ThemedText>):null}
@@ -628,7 +652,7 @@ export default function HomeScreen() {
 					<Button
 						title="Add Species"
 						color="#008000"
-						onPress={() => handleStoreData(fishLocation, catchTime, gear.gearUuid, selectedSpecies, retRun, bulkType, indNum, charList, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified)}
+							onPress={() => handleStoreData(fishLocation, catchTime, gear.gearUuid, selectedSpecies, retRun, bulkType, indNum, charList, bulkNum, isAccurateInd, isAccurateBulk, isPersonal, isVerified)}
 					/>
 					<ThemedView style={{ marginLeft: 40 }}>
 						<Button

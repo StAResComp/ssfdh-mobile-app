@@ -31,6 +31,15 @@ return (
 			),}}
 		/>
 		<Tabs.Screen
+			name="alterCatch"
+			options={{
+				title: 'Catch Verivication',
+				tabBarIcon: ({ color, focused }) => (
+					<TabBarIcon name={focused ? 'reorder-four' : 'reorder-four-outline'} color={color} />
+				),
+			}}
+		/>
+		<Tabs.Screen
 			name="gear"
 			options={{
 			title: 'gear',

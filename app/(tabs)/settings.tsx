@@ -3,11 +3,9 @@ import { useState, useEffect } from 'react';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import NetInfo from '@react-native-community/netinfo';
-import * as Location from 'expo-location';
-import * as TaskManager from 'expo-task-manager';
 import { useSQLiteContext } from 'expo-sqlite';
 import MapLibreGL from '@maplibre/maplibre-react-native';
+import uuid from 'react-native-uuid';
 
 export default function HomeScreen() {
 	const [devConnected, setDevConnected] = useState(true);
@@ -15,7 +13,8 @@ export default function HomeScreen() {
 	const db = useSQLiteContext();
 	const LOCATION_TASK_NAME = 'background-location-task';
 	const progressListener = (offlineRegion:any, status:any) => console.log(offlineRegion, status);
-	const errorListener = (offlineRegion:any, err:any) => console.log(offlineRegion, err);
+	const errorListener = (offlineRegion: any, err: any) => console.log(offlineRegion, err);
+	const speciesList = [{ scientificName: "Acanthocybium solandri", commmonName: "Wahoo", islandName: "Kuta", Score: 2 }, { scientificName: "Abudefduf sordidus", commmonName: "Blackspot sergeant", islandName: "Mummy", Score: 1 }, { scientificName: "Carangoides orthogrammus", commmonName: "Island trevally", islandName: "Ofe", Score: 1 }, { scientificName: "Caranx ignobilis", commmonName: "Giant trevally", islandName: "Ulwa(Giant)", Score: 1 }, { scientificName: "Caranx lugubris", commmonName: "Black trevally", islandName: "Ulwa(Black)", Score: 1 }, { scientificName: "Caranx melampygus", commmonName: "Bluefin trevally", islandName: " Ulwa(Bluefin)", Score: 1 }, { scientificName: "Chaetodon smithii", commmonName: "Smith’s butterflyfish", islandName: "Letas", Score: 1 }, { scientificName: "Coris aygula", commmonName: "Clown coris", islandName: "Miti", Score: 1 }, { scientificName: "Coris roseoviridis", commmonName: "Red-and green coris", islandName: "Elwyn’s Trousers", Score: 1 }, { scientificName: "Epinephelus fasciatus", commmonName: "Blacktip grouper", islandName: "Red Snapper", Score: 2 }, { scientificName: "Epinephelus hexagonatus", commmonName: "Hexagon grouper", islandName: "Rock Cod/Cod", Score: 1 }, { scientificName: "Epinephelus tauvina", commmonName: "Greasy grouper", islandName: "Rock Cod/Fiti Cod", Score: 1 }, { scientificName: "Kuhlia sandvicensis", commmonName: "Hawaiian flagtail", islandName: "Whitefish", Score: 1 }, { scientificName: "Kyphosus pacificus,", commmonName: "Gray drummer", islandName: "Nanwe", Score: 2 }, { scientificName: "Mullidae (Parupeneus & Mulloidichthys spp.)", commmonName: "Goatfish", islandName: "Beard-fish", Score: 1 }, { scientificName: "Scaridae (Scarus & Chlorurus spp.)", commmonName: "Parrotfish", islandName: " Uhu", Score: 1 }, { scientificName: "Seriola lalandi", commmonName: "Yellowtail Amberjack", islandName: "Kingie", Score: 1 }, { scientificName: "Thalassoma purpureum", commmonName: "Surge wrasse", islandName: "Puhu", Score: 1 }, { scientificName: "Thalassoma lutescens", commmonName: "Sunset wrasse", islandName: "Whistling Daughter", Score: 1 }, { scientificName: "Thunnus albacares", commmonName: "Yellow-fin tuna", islandName: "Yellowtail", Score: 2 }, { scientificName: "Xanthichthys mento", commmonName: "Crosshatch triggerfish", islandName: "Pick-Pick", Score: 1 }, {scientificName: "Variola louti", commmonName: "Yellow-edged lyretail", islandName: "Fafaia", Score:2}]
 
 
 	async function handleGetMap(progressListener:any, errorListener:any) {
@@ -35,6 +34,31 @@ export default function HomeScreen() {
 
 	async function handleDeleteMap() {
 		await MapLibreGL.offlineManager.deletePack('PitcairnPack')
+	}
+
+	const handleAddSpecies = async (list: any) => {
+		speciesList.map((memSpecies: any, i: any) => {
+			handleSpeciesDatabase(memSpecies)
+			 }) 
+	}
+
+	async function handleSpeciesDatabase(species: any) {
+		let speciesUID = uuid.v4()
+		try {
+			const statement = await db.prepareAsync('INSERT INTO species(speciesUuid,scientificName,commonName,islandName,score) VALUES (?,?,?,?,?)');
+			await statement.executeAsync([speciesUID, species.scientificName, species.commmonName, species.islandName, species.Score]);
+		} catch (error) {
+			console.log('Error while adding catch : ', error);
+		}
+	}
+
+	const getSpecies = async () => {
+		try {
+			const allRows = await db.getAllAsync('SELECT * FROM species');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while getting locations : ', error);
+		}
 	}
 
 	const getLocations = async () => {
@@ -62,13 +86,46 @@ export default function HomeScreen() {
 			console.log('Error while getting catch : ', error);
 		}
 	}
+	const getVerCatch = async () => {
+		try {
+			const allRows = await db.getAllAsync('SELECT * FROM catchVerify');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while getting catch : ', error);
+		}
+	}
+	const getCatchLink = async () => {
+		try {
+			const allRows = await db.getAllAsync('SELECT * FROM verLink');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while getting catch : ', error);
+		}
+	}
 
 	const deleteCatch = async () => {
 		try {
 			const allRows = await db.getAllAsync('DELETE FROM catch');
 			console.log(allRows)
 		} catch (error) {
-			console.log('Error while getting catch : ', error);
+			console.log('Error while deleteing catch : ', error);
+		}
+	}
+
+	const deleteLocation = async () => {
+		try {
+			const allRows = await db.getAllAsync('DELETE FROM locations');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while deleting locations : ', error);
+		}
+	}
+	const deleteGear = async () => {
+		try {
+			const allRows = await db.getAllAsync('DELETE FROM gear');
+			console.log(allRows)
+		} catch (error) {
+			console.log('Error while deleting gear : ', error);
 		}
 	}
 	
@@ -99,7 +156,7 @@ export default function HomeScreen() {
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
-						title="DeleteMap"
+						title="Delete Map"
 						color="#ff0000"
 						onPress={() => handleDeleteMap()}
 					/>
@@ -117,9 +174,9 @@ export default function HomeScreen() {
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
-						title="show Gear"
+						title="show Species"
 						color="#008000"
-						onPress={() => getGear()}
+						onPress={() => getSpecies()}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
@@ -136,22 +193,22 @@ export default function HomeScreen() {
 			<ThemedView style={{ flexDirection: 'row', marginBottom: 20 }}>
 				<ThemedView>
 					<Button
-						title="show Loc"
-						color="#008000"
-						onPress={() => getLocations()}
+						title="delete Loc"
+						color="#ff0000"
+						onPress={() => deleteLocation()}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
-						title="show Gear"
-						color="#008000"
-						onPress={() => getGear()}
+						title="delete Species"
+						color="#ff0000"
+						onPress={() => deleteGear()}
 					/>
 				</ThemedView>
 				<ThemedView style={{ marginLeft: 20 }}>
 					<Button
 						title="delete Catch"
-						color="#008000"
+						color="#ff0000"
 						onPress={() => deleteCatch()}
 					/>
 				</ThemedView>
@@ -163,6 +220,17 @@ export default function HomeScreen() {
 						title="Submit Data"
 						color="#008000"
 						onPress={() => getCatch()}
+					/>
+				</ThemedView>
+			</ThemedView>
+
+			<ThemedText> Add Species to DB</ThemedText>
+			<ThemedView>
+				<ThemedView>
+					<Button
+						title="Submit Species"
+						color="#008000"
+						onPress={() => handleAddSpecies(speciesList)}
 					/>
 				</ThemedView>
 			</ThemedView>

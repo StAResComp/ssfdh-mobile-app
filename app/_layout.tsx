@@ -19,8 +19,8 @@ export default function RootLayout() {
 	async function initializeDatabase(db: any) {
 		try {
 			await db.execAsync(`
-            PRAGMA journal_mode = WAL;
-            CREATE TABLE IF NOT EXISTS locations (
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS locations (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				latitude REAL NOT NULL,
 				longitude REAL NOT NULL,
@@ -28,8 +28,19 @@ export default function RootLayout() {
 				heading REAL NOT NULL,
 				altitude REAL NOT NULL,
 				timestamp INTEGER NOT NULL
-            );`);
-
+			 );`);
+			
+			await db.execAsync(`
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS species (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				speciesUuid TEXT NOT NULL,
+				scientificName TEXT NOT NULL,
+				commonName TEXT NOT NULL,
+				islandName TEXT NOT NULL,
+				score INTEGER NOT NULL
+			 );`);
+			
 			await db.execAsync(`
 			PRAGMA journal_mode = WAL;
 			CREATE TABLE IF NOT EXISTS catch (
@@ -64,8 +75,7 @@ export default function RootLayout() {
 				bulkType TEXT,
 				bulkNum REAL,
 				accurateInd INTEGER NOT NULL,
-				accurateBulk INTEGER NOT NULL,
-				verifies TEXT NOT NULL
+				accurateBulk INTEGER NOT NULL
 			);`);
 
 			await db.execAsync(`
@@ -77,6 +87,18 @@ export default function RootLayout() {
 				name TEXT NOT NULL,
 				number REAL NOT NULL,
 				visible INTEGER NOT NULL DEFAULT 1
+			);`);
+
+			await db.execAsync(`
+			PRAGMA journal_mode = WAL;
+			CREATE TABLE IF NOT EXISTS verLink(
+				verifyUuid TEXT NOT NULL,
+				catchUuid TEXT NOT NULL,
+				FOREIGN KEY (verifyUuid)
+					REFERENCES catchVerify (verifyUuid)
+				FOREIGN KEY (catchUuid)
+					REFERENCES catch (catchUuid)
+				PRIMARY KEY (verifyUuid,catchUuid)
 			);`);
 	
 			console.log('Database initialised')

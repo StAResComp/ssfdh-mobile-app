@@ -8,10 +8,12 @@ import { Picker } from '@react-native-picker/picker';
 import uuid from 'react-native-uuid';
 
 export default function HomeScreen() {
+
 	const [catchList, setCatchList] = useState<any>();
 	const [currCatch, setCurrCatch] = useState<any>();
-	const [verifiedCatches, setVerifiedCatches] = useState<any>();
-	const [catchInfo, setCatchInfo] = useState<boolean>(false);
+	const [verifiedGroups, setVerifiedGroups] = useState<any>();
+	const [currGroup, setCurrGroup] = useState<any>();
+	const [pageStyle, setPageStyle] = useState<string>("Group");
 	const [indNum, setIndNum] = useState<any>();
 	const [bulkNum, setBulkNum] = useState<any>();
 	const [bulkType, setBulkType] = useState<any>();
@@ -23,9 +25,8 @@ export default function HomeScreen() {
 
 	useEffect(() => {
 		fetchCatch()
-		
 	}, []);
-	//console.log(verifiedCatches)
+
 	const toggleSwitchInd = () => setIsAccurateInd(previousState => !previousState);
 
 	const toggleSwitchBulk = () => setIsAccurateBulk(previousState => !previousState);
@@ -35,35 +36,67 @@ export default function HomeScreen() {
 		setCatchList(data);
 	}
 
-	const handleAddCatch = async () => {
-		if (verifiedCatches) {
-			setVerifiedCatches([...verifiedCatches, { catchUuid: currCatch }])
-		} else {
-			setVerifiedCatches([{ catchUuid: currCatch }] )
+	function removeItemVerGroup(array:any, itemToRemove:any) {
+		//console.log("Before:", array);
+		if (verifiedGroups.length > 1) {
+			setVerifiedGroups(array.filter(item => item !== itemToRemove));
+		} else if (verifiedGroups.length = 1) {
+			setVerifiedGroups(false)
 		}
+		//console.log("After:", verifiedGroups);
+	}
+
+	function removeItemCatch(array: any, itemToRemove: any) {
+		//console.log("Before:", array);
+		if (catchList.length > 1) {
+			setCatchList(array.filter(item => item !== itemToRemove));
+		} else if (catchList.length = 1) {
+			setCatchList(false)
+		}
+		//console.log("After:", catchList);
+	}
+
+	const handleAddVerGroup = async () => {
+		if (verifiedGroups) {
+			setVerifiedGroups([...verifiedGroups, currGroup])
+		} else {
+			setVerifiedGroups([currGroup] )
+		}
+		setCurrGroup(false)
+	}
+
+	const handleAddCatchGroup = async () => {
+		if (currGroup) {
+			setCurrGroup([...currGroup, { catchUuid: currCatch }])
+		} else {
+			setCurrGroup([{ catchUuid: currCatch }])
+		}
+		removeItemCatch(catchList, currCatch)
 		setCurrCatch(false)
 	}
 
-	const handleDeleteCatch = () => {
-		if (verifiedCatches && verifiedCatches.length > 1 ) {
-			let tempCatchList = verifiedCatches;
-			tempCatchList.pop();
-			setVerifiedCatches([tempCatchList])
-		} else if (verifiedCatches && verifiedCatches.length == 1) {
-			setVerifiedCatches(false)
-		}
+
+	const handleGoToInfoPage =  () => {
+			setCurrGroup(false)
+			setPageStyle("Info")
+		
 	}
 
-	const handleBack = () => {
-		setVerifiedCatches(false)
-		setCatchInfo(false)
+	const handleVerSubmit = () => {
+		removeItemVerGroup(verifiedGroups,currGroup)
+		setCurrGroup(false)
+		AddVertoDB()
 	}
+	
 
-	async function listLoop(item: any, index: any) {
+	async function AddVerLinkstoDB(item:any,verifyUID:any) {
 		for (var key in item) {
 			try {
+				console.log(item[key].catchUuid)
 				const statement = await db.prepareAsync('UPDATE catch SET shoreVer = 1 WHERE catchUuid = ?');
-				await statement.executeAsync([item[key]])
+				await statement.executeAsync([item[key].catchUuid])
+				const statement2 = await db.prepareAsync('INSERT INTO verLink(verifyUuid,catchUuid)VALUES (?,?)');
+				await statement2.executeAsync([verifyUID, item[key].catchUuid])
 			} catch (error) {
 				console.log('Error while adding catch : ', error);
 
@@ -71,10 +104,16 @@ export default function HomeScreen() {
 		}
 	}
 
-	async function handleAddDB(bulkType: any, indNum: any, bulkNum: any, isAccurateInd: any, isAccurateBulk: any, verifiedCatches:any) { 
-		let verUUID = uuid.v4()
-		let verTime = new Date()
-		verifiedCatches.forEach(listLoop);
+	async function AddVertoDB() {
+		let verifyUID = uuid.v4()
+		let dateVer = new Date()
+		try {
+			const statement = await db.prepareAsync('INSERT INTO catchVerify(verifyUuid,date,indNum,bulkType,bulkNum,accurateInd,accurateBulk  ) VALUES (?,?,?,?,?,?,?)');
+			await statement.executeAsync([verifyUID,dateVer.toISOString(), indNum, bulkType, bulkNum, isAccurateInd, isAccurateBulk]);
+		} catch (error) {
+			console.log('Error while adding catch : ', error);
+		}
+		AddVerLinkstoDB(currGroup,verifyUID)
 	}
 
 	const handleIndividualChange = (text: any) => {
@@ -83,6 +122,7 @@ export default function HomeScreen() {
 	const handleBulkChange = (text: any) => {
 		setBulkNum(text)
 	}
+	
 	return (
 		<ParallaxScrollView
 		headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -94,8 +134,105 @@ export default function HomeScreen() {
 		}>
 			<ThemedView>
 				<ThemedText> On Shore Verification</ThemedText>
-				{(!catchInfo ) && 
+				{(pageStyle == "Group") &&
 					<ThemedView>
+						<ThemedView style={{ marginTop: 20, marginBottom: 20 }} >
+							<Button
+								title="Fetch Catch"
+								color="#008000"
+								onPress={() => fetchCatch()}
+							/>
+						</ThemedView>
+						{catchList &&
+							<Picker
+								style={{ color: textColor[colorScheme] }}
+								mode="dropdown"
+								dropdownIconColor={textColor[colorScheme]}
+								selectedValue={currCatch}
+								onValueChange={(itemValue, itemIndex) => setCurrCatch(itemValue)}>
+								{catchList.map((memCatch: any, i:any) => {
+									return (
+										<Picker.Item key={memCatch.catchUuid} label={`${new Date(memCatch.date).toDateString()} ${i+1}`} value={memCatch.catchUuid} />
+									);
+								})}
+							</Picker>
+						}
+						{(catchList && currCatch) &&
+							catchList.filter((memCatch: any) => memCatch.catchUuid == currCatch).map((memCatch: any) => {
+								return (
+									<ThemedView >
+										<ThemedText> date: {`${new Date(memCatch.date)}`} </ThemedText >
+										<ThemedText> species:  {memCatch.species} </ThemedText>
+										<ThemedText> Retained/Ruturned:  {memCatch.retRun} </ThemedText>
+										<ThemedText> latitude:  {memCatch.longitude} </ThemedText>
+										<ThemedText> longitude {memCatch.latitude} </ThemedText >
+										<ThemedText> Individuals:  {memCatch.indNum}</ThemedText >
+										<ThemedText> Bulk Type:  {memCatch.bulkType} Bulk Number:{memCatch.bulkNum} </ThemedText >
+										<ThemedView style={{ marginTop: 80 }}>
+											<Button
+												title="Add catch to group"
+												color="#008000"
+												onPress={() => handleAddCatchGroup()}
+											/>
+										</ThemedView>
+									</ThemedView>
+								);
+							})}
+						<ThemedView style={{ marginTop: 80, marginBottom: 20 }} >
+							<Button
+								title="Submit Group"
+								color="#008000"
+								onPress={() => handleAddVerGroup()}
+							/>
+						</ThemedView>
+						{(verifiedGroups) &&
+							<ThemedView >
+								{verifiedGroups.map((memGroup: any, i: any) => {
+									return (
+										<>
+											<ThemedText> Group:{i + 1} </ThemedText >
+											<ThemedText> {JSON.stringify(memGroup)} </ThemedText >
+										</>
+									)
+								})}
+							</ThemedView >
+						}
+						<Button
+							title="Go to  Info Page"
+							color="#008000"
+							onPress={() => handleGoToInfoPage()}
+						/>
+					</ThemedView>}
+				{(pageStyle=="Info") &&
+					<ThemedView>
+						<ThemedView style={{ marginTop: 30, marginBottom: 30 }}>
+							{verifiedGroups &&
+								<Picker
+									style={{ color: textColor[colorScheme] }}
+									mode="dropdown"
+									dropdownIconColor={textColor[colorScheme]}
+									selectedValue={currCatch}
+									onValueChange={(itemValue, itemIndex) => setCurrGroup(itemValue)}>
+
+									{verifiedGroups.map((memGroup: any, i: any) => {
+										return (
+											<Picker.Item key={i} label={`Group: ${i + 1}`} value={memGroup} />
+										);
+									})}
+								</Picker>}
+							{currGroup && 
+								<>
+								<ThemedText> Number of Cach Records{currGroup.length} </ThemedText >
+								{currGroup.map((memGroup: any, i: any) => {
+									return (
+										<>
+											<ThemedText> {JSON.stringify(memGroup)} </ThemedText >
+										</>
+									)
+								})}
+							</>
+							}
+						</ThemedView>
 						<ThemedView style={{ flexDirection: 'row', marginTop: 30 }}>
 							<ThemedView>
 								<ThemedText type="defaultSemiBold"> Number: </ThemedText>
@@ -110,7 +247,7 @@ export default function HomeScreen() {
 									value={isAccurateInd}
 								/>
 							</ThemedView>
-						</ThemedView> 
+						</ThemedView>
 						<ThemedView style={{ marginTop: 30 }} >
 							<ThemedText type="defaultSemiBold"> Bulk Select: </ThemedText>
 							<Picker
@@ -121,7 +258,7 @@ export default function HomeScreen() {
 								onValueChange={(itemValue, itemIndex) => setBulkType(itemValue)}
 							>
 								<Picker.Item label="Choose Metric" value="Choose Metric" />
-								<Picker.Item label="N/A" value= "0" />
+								<Picker.Item label="N/A" value="0" />
 								<Picker.Item label="Kg" value="Kg" />
 								<Picker.Item label="lb" value="lb" />
 							</Picker>
@@ -141,97 +278,31 @@ export default function HomeScreen() {
 								</ThemedView>
 							</ThemedView>
 						</ThemedView>
-						<ThemedView style={{ marginTop: 20, marginBottom: 20 }}>
+						<ThemedView style={{ marginTop: 20 }}>
+							{(indNum && !bulkNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} </ThemedText>) : null}
+							{(bulkType) ? (<ThemedText type="defaultSemiBold"> Bulk Type: {bulkType} </ThemedText>) : null}
+							{(bulkNum && !indNum) ? (<ThemedText type="defaultSemiBold"> Bulk Number: {bulkNum} </ThemedText>) : null}
+							{(bulkNum && indNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} Bulk Number: {bulkNum} </ThemedText>) : null}
+							{(isAccurateInd) ? (<ThemedText type="defaultSemiBold"> Ind Accurate: True </ThemedText>) : <ThemedText type="defaultSemiBold"> Ind Accurate: False</ThemedText>}
+							{(isAccurateBulk) ? (<ThemedText type="defaultSemiBold"> Bulk Accurate: True </ThemedText>) : <ThemedText type="defaultSemiBold"> Bulk Accurate: False</ThemedText>}
+						</ThemedView>
+						<ThemedView style={{ marginTop: 20 }}>
 							<Button
-								title="Pick Catches"
+								title="Submit"
 								color="#008000"
-								onPress={() => setCatchInfo(true)}
-							/>
-					</ThemedView>
-					</ThemedView>
-				}
-				{catchInfo &&
-					<ThemedView >
-						<ThemedView style={{ marginTop: 20, marginBottom: 20 }} >
-						<Button
-							title="Fetch Catch"
-							color="#008000"
-							onPress={() => fetchCatch()}
+								onPress={() => handleVerSubmit()}
 							/>
 						</ThemedView>
-					{catchList &&
-						<Picker
-							style={{ color: textColor[colorScheme] }}
-							mode="dropdown"
-							dropdownIconColor={textColor[colorScheme]}
-							selectedValue={currCatch}
-							onValueChange={(itemValue, itemIndex) => setCurrCatch(itemValue)}>
-							{catchList.map((memCatch: any) => {
-								return (
-									<Picker.Item key={memCatch.catchUuid} label={`${new Date(memCatch.date)}`} value={memCatch.catchUuid} />
-									);
-							})}
-						</Picker>
-					}
-					{(catchList && currCatch) &&
-						catchList.filter((memCatch: any) => memCatch.catchUuid == currCatch).map((memCatch: any) => {
-							return (
-								<ThemedView >
-									<ThemedText> date: {`${new Date(memCatch.date)}`} </ThemedText >
-									<ThemedText> latitude:  {memCatch.longitude} </ThemedText>
-									<ThemedText> longitude {memCatch.latitude} </ThemedText >
-									<ThemedText> Individuals:  {memCatch.indNum}</ThemedText >
-									<ThemedText> Bulk Type:  {memCatch.bulkType} Bulk Number:{memCatch.bulkNum} </ThemedText >
-									<ThemedView style={{ marginTop: 80 }}>
-										<Button
-											title="add catch to verification"
-											color="#008000"
-											onPress={() => handleAddCatch()}
-										/>
-									</ThemedView>
-								</ThemedView>
-								);
-							})
-						}
-						{(indNum && !bulkNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} </ThemedText>) : null}
-						{(bulkType) ? (<ThemedText type="defaultSemiBold"> Bulk Type: {bulkType} </ThemedText>) : null}
-						{(bulkNum && !indNum) ? (<ThemedText type="defaultSemiBold"> Bulk Number: {bulkNum} </ThemedText>) : null}
-						{(bulkNum && indNum) ? (<ThemedText type="defaultSemiBold"> Individuals: {indNum} Bulk Number: {bulkNum} </ThemedText>) : null}
-						{verifiedCatches && 
-							<ThemedView>
-								<ThemedText type="defaultSemiBold"> Verify Catches</ThemedText>
-								{verifiedCatches.map((verCatch: any) => {
-									return (
-										<ThemedText key={verCatch.catchUuid}> Id: {verCatch.catchUuid} </ThemedText >
-									);
-								})}
-							</ThemedView>
-						}	
-						{verifiedCatches && <ThemedView style={{ marginTop: 60 }}>
+						<ThemedView style={{ marginTop: 20 }}>
 							<Button
-								title="Undo last catch"
-								color="#ff0000"
-								onPress={() => handleDeleteCatch()}
-							/>
-						</ThemedView>}
-						<ThemedView style={{ marginTop: 60 }}>
-							<Button
-								title="Back to info entry"
-								color="#ff0000"
-								onPress={() => handleBack()}
-							/>
-						</ThemedView>
-
-						<ThemedView style={{ marginTop: 80 }}>
-							<Button
-								title="Add to DB"
-								color="#ff0000"
-								onPress={() => handleAddDB(bulkType, indNum, bulkNum, isAccurateInd, isAccurateBulk, verifiedCatches)}
+								title="back"
+								color="#008000"
+								onPress={() => setPageStyle("Group")}
 							/>
 						</ThemedView>
 					</ThemedView>
 				}
-		</ThemedView>
+			</ThemedView>
 		</ParallaxScrollView>
   );
 }	
